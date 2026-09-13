@@ -23,6 +23,7 @@ on:
       - "!requirements/pytorch/docs.txt"
       - "!*.md"
       - "!**/*.md"
+  workflow_dispatch:
   schedule:
     # At the end of every day
     - cron: "0 0 * * *"
