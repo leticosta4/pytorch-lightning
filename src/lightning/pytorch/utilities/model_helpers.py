@@ -134,3 +134,5 @@ if TYPE_CHECKING:
     _restricted_classmethod = classmethod
 else:
     _restricted_classmethod = _restricted_classmethod_impl
+
+# track-flaky: commit trivial para disparar CI (2026-09-28)
