@@ -38,7 +38,7 @@ jobs:
         os: [ubuntu-22.04]
         config:
           # Test unified "lightning" package with the latest PyTorch
-          - { pkg-name: "lightning", python-version: "3.13", pytorch-version: "2.13" }
+          - { pkg-name: "lightning", python-version: "3.13", pytorch-version: "2.12" }
 
           # Test "fabric" package with PyTorch 2.12
           - { pkg-name: "fabric", python-version: "3.13", pytorch-version: "2.12" }
