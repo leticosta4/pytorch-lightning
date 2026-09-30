@@ -44,19 +44,16 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         config:
-          # Test unified "lightning" package at the oldest supported and the latest PyTorch
+          # Test unified "lightning" package with the latest PyTorch
           - { pkg-name: "lightning", python-version: "3.13", pytorch-version: "2.13" }
 
-          # Test "pytorch" package with PyTorch 2.6-2.13
+          # Test "pytorch" package with PyTorch 2.12
           - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.12" }
-
     timeout-minutes: 50
     env:
       PACKAGE_NAME: ${{ matrix.config.pkg-name }}
       TORCH_URL: "https://download.pytorch.org/whl/cpu/"
       FREEZE_REQUIREMENTS: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
-      # TODO: Remove this - Enable running MPS tests on this platform
-      DISABLE_MPS: ${{ matrix.os == 'macOS-14' && '1' || '0' }}
       UV_TORCH_BACKEND: "cpu"
       # Supply-chain guard: skip PyPI releases newer than this. See https://docs.astral.sh/uv/reference/settings/#exclude-newer
       UV_EXCLUDE_NEWER: "2 days"
@@ -80,14 +77,12 @@ jobs:
         run: echo "GLOO_SOCKET_IFNAME=eth0" >> $GITHUB_ENV
 
       - name: Adjust PyTorch versions in requirements files
-        if: ${{ matrix.config.requires != 'oldest' }}
         run: |
           uv pip install -q -r requirements/ci.txt
           python -m wget https://raw.githubusercontent.com/Lightning-AI/utilities/main/scripts/adjust-torch-versions.py
           for fpath in `ls requirements/**/*.txt`; do \
             python ./adjust-torch-versions.py $fpath ${{ matrix.config.pytorch-version }}; \
           done
-          cat requirements/pytorch/base.txt
 
       - name: Env. variables
         run: |

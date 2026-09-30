@@ -37,19 +37,16 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         config:
-          # Test unified "lightning" package at the oldest supported and the latest PyTorch
+          # Test unified "lightning" package with the latest PyTorch
           - { pkg-name: "lightning", python-version: "3.13", pytorch-version: "2.13" }
 
-          # Test "fabric" package with PyTorch 2.6-2.13
+          # Test "fabric" package with PyTorch 2.12
           - { pkg-name: "fabric", python-version: "3.13", pytorch-version: "2.12" }
-
-    timeout-minutes: 25 # because of building grpcio on Mac
+    timeout-minutes: 25
     env:
       PACKAGE_NAME: ${{ matrix.config.pkg-name }}
       FREEZE_REQUIREMENTS: ${{ ! (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/')) }}
       TORCH_URL_STABLE: "https://download.pytorch.org/whl/cpu/"
-      # TODO: Remove this - Enable running MPS tests on this platform
-      DISABLE_MPS: ${{ matrix.os == 'macOS-14' && '1' || '0' }}
       UV_TORCH_BACKEND: "cpu"
       # Supply-chain guard: skip PyPI releases newer than this. See https://docs.astral.sh/uv/reference/settings/#exclude-newer
       UV_EXCLUDE_NEWER: "2 days"
@@ -73,7 +70,6 @@ jobs:
         run: echo "GLOO_SOCKET_IFNAME=eth0" >> $GITHUB_ENV
 
       - name: Adjust PyTorch versions in requirements files
-        if: ${{ matrix.config.requires != 'oldest' }}
         run: |
           uv pip install -q -r requirements/ci.txt
           python -m wget https://raw.githubusercontent.com/Lightning-AI/utilities/main/scripts/adjust-torch-versions.py
