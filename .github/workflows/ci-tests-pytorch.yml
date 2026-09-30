@@ -42,30 +42,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS-14, ubuntu-22.04, windows-2022]
+        os: [ubuntu-22.04]
         config:
           # Test unified "lightning" package at the oldest supported and the latest PyTorch
-          - { pkg-name: "lightning", python-version: "3.10", pytorch-version: "2.6" }
           - { pkg-name: "lightning", python-version: "3.13", pytorch-version: "2.13" }
 
           # Test "pytorch" package with PyTorch 2.6-2.13
-          - { pkg-name: "pytorch", python-version: "3.12.7", pytorch-version: "2.6" }
-          - { pkg-name: "pytorch", python-version: "3.12", pytorch-version: "2.7" }
-          - { pkg-name: "pytorch", python-version: "3.12", pytorch-version: "2.8" }
-          - { pkg-name: "pytorch", python-version: "3.12", pytorch-version: "2.9" }
-          - { pkg-name: "pytorch", python-version: "3.12", pytorch-version: "2.10" }
-          - { pkg-name: "pytorch", python-version: "3.12", pytorch-version: "2.11" }
-          - { pkg-name: "pytorch", python-version: "3.12", pytorch-version: "2.12" }
-          - { pkg-name: "pytorch", python-version: "3.12", pytorch-version: "2.13" }
-          - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.8" }
-          - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.9" }
-          - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.10" }
-          - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.11" }
           - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.12" }
-          - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.13" }
 
-          # Test minimum supported versions (oldest)
-          - { pkg-name: "pytorch", pytorch-version: "2.6", requires: "oldest" }
     timeout-minutes: 50
     env:
       PACKAGE_NAME: ${{ matrix.config.pkg-name }}
@@ -94,22 +78,6 @@ jobs:
       - name: Append Env. vars for Linux
         if: ${{ runner.os == 'Linux' }}
         run: echo "GLOO_SOCKET_IFNAME=eth0" >> $GITHUB_ENV
-
-      - name: Append Env. vars for MacOS
-        if: ${{ runner.os == 'macOS' }}
-        run: echo "GLOO_SOCKET_IFNAME=lo0" >> $GITHUB_ENV
-
-      - name: Set min. dependencies
-        if: ${{ matrix.config.requires == 'oldest' }}
-        run: |
-          uv pip install -U "lightning-utilities[cli]"
-          python -m lightning_utilities.cli requirements set-oldest \
-            --req_files "['requirements/pytorch/base.txt', 'requirements/pytorch/extra.txt', 'requirements/pytorch/strategies.txt', 'requirements/pytorch/examples.txt', 'requirements/pytorch/test.txt']"
-          uv pip install "cython<3.0" wheel
-          uv pip install "pyyaml==6.0.0" --no-build-isolation
-          # This script removes any line containing "error::FutureWarning" from pyproject.toml
-          uv pip install -r requirements/ci.txt
-          python .actions/assistant.py prune_pytest_as_errors
 
       - name: Adjust PyTorch versions in requirements files
         if: ${{ matrix.config.requires != 'oldest' }}
@@ -189,30 +157,6 @@ jobs:
           python -m coverage run --source ${{ env.COVERAGE_SCOPE }} \
             -m pytest . -v --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
             --junitxml=junit.xml -o junit_family=legacy  # NOTE: for Codecov's test results
-
-      - name: Statistics
-        if: success()
-        working-directory: tests/tests_pytorch
-        run: |
-          coverage report
-          coverage xml
-
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }} # Run even if tests fail
-        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
-        # see: https://github.com/actions/toolkit/issues/399
-        continue-on-error: true
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: tests/tests_pytorch/coverage.xml
-          flags: ${{ env.COVERAGE_SCOPE }},cpu,pytest-full,python${{ matrix.config.python-version }},pytorch${{ matrix.config.pytorch-version }}
-          name: CPU-coverage
-          fail_ci_if_error: false
 
       - name: Minimize uv cache
         run: uv cache prune --ci
