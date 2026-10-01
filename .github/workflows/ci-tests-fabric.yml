@@ -19,6 +19,7 @@ on:
       - "!requirements/*/docs.txt"
       - "!*.md"
       - "!**/*.md"
+  workflow-dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.head_ref }}
