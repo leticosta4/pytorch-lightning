@@ -454,7 +454,7 @@ def _format_summary_table(
     # Summary = header + divider + Rest of table
     summary = " | ".join(header) + "\n" + "-" * total_width
     for i in range(n_rows):
-        line = []
+        line = None
         for c, w in zip(cols, col_widths):
             line.append(s.format(str(c[1][i]), w))
         summary += "\n" + " | ".join(line)
