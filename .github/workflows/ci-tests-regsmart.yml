@@ -39,7 +39,7 @@ defaults:
     shell: bash
 
 env:
-  REGSMART_PACKAGE: "git+https://github.com/leticosta4/pytest-regsmart@9dcd610633b615a8964e99c4117d5c680c93b791"
+  REGSMART_PACKAGE: "git+https://github.com/leticosta4/pytest-regsmart@e5ef89d5362d1af5027a0e0adb11cc02f5c2f416"
 
 jobs:
   pl-cpu:
