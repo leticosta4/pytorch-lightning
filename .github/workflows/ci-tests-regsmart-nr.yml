@@ -1,11 +1,11 @@
-name: Test PyTorch
+name: Test Regsmart no RTP
 
 # see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
 on:
   push:
-    branches: [master, "release/*"]
+    branches: ["!master", "release/*"]
   pull_request:
-    branches: [master, "release/*"]
+    branches: [master, "release/*", "mut-*"]
     types: [opened, reopened, ready_for_review, synchronize] # added `ready_for_review` since draft is skipped
     paths:
       - ".actions/*"
@@ -33,6 +33,9 @@ defaults:
   run:
     shell: bash
 
+env:
+  REGSMART_PACKAGE: "git+https://github.com/leticosta4/pytest-regsmart@9dcd610633b615a8964e99c4117d5c680c93b791"
+
 jobs:
   pl-cpu:
     runs-on: ubuntu-22.04
@@ -53,6 +56,8 @@ jobs:
       UV_EXCLUDE_NEWER: "2 days"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
       - name: Install uv and set Python version
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -94,6 +99,11 @@ jobs:
           # ensure pkg_resources is available for older python versions & packages like onnxruntime that require it
           uv pip install "setuptools<80.10.3"
           uv pip list
+        
+      - name: Install pytest-regsmart
+        run: |
+          uv pip install "$REGSMART_PACKAGE"
+          uv pip freeze
 
       - name: Drop LAI from extensions
         if: ${{ matrix.config.pkg-name != 'lightning' }}
@@ -144,7 +154,7 @@ jobs:
         run: |
           echo $GITHUB_RUN_ID
           python -m coverage run --source ${{ env.COVERAGE_SCOPE }} \
-            -m pytest . -v -p no:pytest-regsmart -p no:pytest-ranking --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
+            -m pytest . -v --regsmart --no-rank --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
             --junitxml=junit.xml -o junit_family=legacy  # NOTE: for Codecov's test results
 
       - name: Minimize uv cache
