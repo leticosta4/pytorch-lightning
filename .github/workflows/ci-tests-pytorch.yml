@@ -1,9 +1,11 @@
 name: Test PyTorch
 
-# see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
+# see: https://help.github.com/en/actions/reference/events-that-trigger-workflows7
 on:
   push:
-    branches: [master, "release/*"]
+  branches:
+    - master
+    - "release/*"
   pull_request:
     branches: [master, "release/*"]
     types: [opened, reopened, ready_for_review, synchronize] # added `ready_for_review` since draft is skipped

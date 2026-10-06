@@ -2,11 +2,16 @@ name: Test Regsmart
 
 # see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
 on:
-  push:
-    branches: ["!master", "release/*"]
   pull_request:
-    branches: [master, "release/*", "mut-*"]
-    types: [opened, reopened, ready_for_review, synchronize] # added `ready_for_review` since draft is skipped
+    branches:
+      - master
+      - "release/*"
+      - "mut-*"
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
     paths:
       - ".actions/*"
       - "requirements/ci.txt"
@@ -38,9 +43,8 @@ env:
 
 jobs:
   pl-cpu:
-    name: regsmart (${{ matrix.mode }})
+    name: regsmart (${{ matrix.config.mode }})
     runs-on: ubuntu-22.04
-    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
@@ -170,9 +174,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranked_selection_data
-          key: pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.mode }}
+          key: pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.config.mode }}
           restore-keys: |
-            pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.mode }}-
+            pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.config.mode }}-
 
       - name: Testing PyTorch
         working-directory: tests/tests_pytorch
@@ -180,7 +184,7 @@ jobs:
         run: |
           echo $GITHUB_RUN_ID
           python -m coverage run --source ${{ env.COVERAGE_SCOPE }} \
-            -m pytest . -v --regsmart --no-rank --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
+            -m pytest . -v --regsmart --ranking-weight=${{ matrix.config.weight }} --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
             --junitxml=junit.xml -o junit_family=legacy  # NOTE: for Codecov's test results
       
       - name: Save pytest-regsmart cache
@@ -188,7 +192,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranked_selection_data
-          key: pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.mode }}-${{ github.run_id }}
+          key: pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.config.mode }}-${{ github.run_id }}
 
       - name: Minimize uv cache
         run: uv cache prune --ci

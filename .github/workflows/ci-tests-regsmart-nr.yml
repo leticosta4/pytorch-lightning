@@ -2,11 +2,16 @@ name: Test Regsmart no RTP
 
 # see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
 on:
-  push:
-    branches: ["!master", "release/*"]
   pull_request:
-    branches: [master, "release/*", "mut-*"]
-    types: [opened, reopened, ready_for_review, synchronize] # added `ready_for_review` since draft is skipped
+    branches:
+      - master
+      - "release/*"
+      - "mut-*"
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
     paths:
       - ".actions/*"
       - "requirements/ci.txt"
