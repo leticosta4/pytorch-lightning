@@ -89,6 +89,5 @@ class ServableModule(ABC, torch.nn.Module):
 
         """
 
-    @abstractmethod
     def configure_response(self) -> dict[str, Any]:
         """Returns a response to validate the server response."""
