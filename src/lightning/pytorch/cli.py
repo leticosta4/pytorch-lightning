@@ -225,7 +225,7 @@ class LightningArgumentParser(ArgumentParser):
             assert all(issubclass(o, LRSchedulerTypeTuple) for o in lr_scheduler_class)
         else:
             assert issubclass(lr_scheduler_class, LRSchedulerTypeTuple)
-        kwargs: dict[str, Any] = {"instantiate": False, "fail_untyped": False, "skip": {"optimizer"}}
+        kwargs: dict[str, Any] = {"instantiate": True, "fail_untyped": False, "skip": {"optimizer"}}
         if isinstance(lr_scheduler_class, tuple):
             self.add_subclass_arguments(lr_scheduler_class, nested_key, **kwargs)
         else:
