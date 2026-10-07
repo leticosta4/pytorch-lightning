@@ -1,21 +1,30 @@
-name: Test PyTorch
+name: Test Regsmart
 
-# see: https://help.github.com/en/actions/reference/events-that-trigger-workflows7
+# see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
 on:
-  push:
-  branches:
-    - master
-    - "release/*"
   pull_request:
-    branches: [master, "release/*", "mut-*"]
-    types: [opened, reopened, ready_for_review, synchronize] # added `ready_for_review` since draft is skipped
+    branches:
+      - master
+      - "release/*"
+      - "mut-*"
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+      - synchronize
     paths:
       - ".actions/*"
       - "requirements/ci.txt"
       - "requirements/pytorch/**"
+      - "src/lightning/pytorch/**"
+      - "src/pytorch_lightning/*"
+      - "tests/tests_pytorch/**"
+      - "tests/legacy/**"
       - "pyproject.toml" # includes pytest config
       - ".github/workflows/ci-tests-pytorch.yml"
       - "requirements/fabric/**"
+      - "src/lightning/fabric/**"
+      - "src/lightning_fabric/*"
       - "!requirements/pytorch/docs.txt"
       - "!*.md"
       - "!**/*.md"
@@ -29,15 +38,35 @@ defaults:
   run:
     shell: bash
 
+env:
+  REGSMART_PACKAGE: "git+https://github.com/leticosta4/pytest-regsmart@e8fe612271bc27698cd8285a535209262e8e1a03"
+
 jobs:
   pl-cpu:
+    name: regsmart (${{ matrix.config.mode }})
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         config:
           # Test "pytorch" package with PyTorch 2.12
-          - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.12" }
+          - pkg-name: "pytorch"
+            python-version: "3.13"
+            pytorch-version: "2.12"
+            mode: rgsm_qtf
+            weight: "1-0"
+          - pkg-name: "pytorch"
+            python-version: "3.13"
+            pytorch-version: "2.12"
+            mode: rgsm_recentfail
+            weight: "0-1"
+          - pkg-name: "pytorch"
+            python-version: "3.13"
+            pytorch-version: "2.12"
+            mode: rgsm_hybrid
+            weight: "1-1"
+
+
     timeout-minutes: 50
     env:
       PACKAGE_NAME: ${{ matrix.config.pkg-name }}
@@ -48,6 +77,8 @@ jobs:
       UV_EXCLUDE_NEWER: "2 days"
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
 
       - name: Install uv and set Python version
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
@@ -89,6 +120,11 @@ jobs:
           # ensure pkg_resources is available for older python versions & packages like onnxruntime that require it
           uv pip install "setuptools<80.10.3"
           uv pip list
+        
+      - name: Install pytest-regsmart
+        run: |
+          uv pip install "$REGSMART_PACKAGE"
+          uv pip freeze
 
       - name: Drop LAI from extensions
         if: ${{ matrix.config.pkg-name != 'lightning' }}
@@ -133,14 +169,30 @@ jobs:
         # needs to run outside `pytest`
         run: python utilities/test_warnings.py
 
+      - name: Restore pytest-regsmart cache
+        id: restore-pytest-regsmart-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranked_selection_data
+          key: pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.config.mode }}
+          restore-keys: |
+            pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.config.mode }}-
+
       - name: Testing PyTorch
         working-directory: tests/tests_pytorch
         # NOTE: do not include coverage report here, see: https://github.com/nedbat/coveragepy/issues/1003
         run: |
           echo $GITHUB_RUN_ID
           python -m coverage run --source ${{ env.COVERAGE_SCOPE }} \
-            -m pytest . -v -p no:pytest-regsmart -p no:pytest-ranking --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
+            -m pytest . -v --regsmart --ranking-weight=${{ matrix.config.weight }} --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
             --junitxml=junit.xml -o junit_family=legacy  # NOTE: for Codecov's test results
+      
+      - name: Save pytest-regsmart cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranked_selection_data
+          key: pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.config.mode }}-${{ github.run_id }}
 
       - name: Minimize uv cache
         run: uv cache prune --ci
