@@ -1,25 +1,21 @@
 name: Test PyTorch
 
-# see: https://help.github.com/en/actions/reference/events-that-trigger-workflows
+# see: https://help.github.com/en/actions/reference/events-that-trigger-workflows7
 on:
   push:
-    branches: [master, "release/*"]
+    branches:
+      - master
+      - "release/*"
   pull_request:
-    branches: [master, "release/*"]
+    branches: [master, "release/*", "mut-*"]
     types: [opened, reopened, ready_for_review, synchronize] # added `ready_for_review` since draft is skipped
     paths:
       - ".actions/*"
       - "requirements/ci.txt"
       - "requirements/pytorch/**"
-      - "src/lightning/pytorch/**"
-      - "src/pytorch_lightning/*"
-      - "tests/tests_pytorch/**"
-      - "tests/legacy/**"
       - "pyproject.toml" # includes pytest config
       - ".github/workflows/ci-tests-pytorch.yml"
       - "requirements/fabric/**"
-      - "src/lightning/fabric/**"
-      - "src/lightning_fabric/*"
       - "!requirements/pytorch/docs.txt"
       - "!*.md"
       - "!**/*.md"
@@ -35,12 +31,10 @@ defaults:
 
 jobs:
   pl-cpu:
-    runs-on: ${{ matrix.os }}
-    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04]
         config:
           # Test "pytorch" package with PyTorch 2.12
           - { pkg-name: "pytorch", python-version: "3.13", pytorch-version: "2.12" }
@@ -145,7 +139,7 @@ jobs:
         run: |
           echo $GITHUB_RUN_ID
           python -m coverage run --source ${{ env.COVERAGE_SCOPE }} \
-            -m pytest . -v --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
+            -m pytest . -v -p no:pytest-regsmart -p no:pytest-ranking --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
             --junitxml=junit.xml -o junit_family=legacy  # NOTE: for Codecov's test results
 
       - name: Minimize uv cache
