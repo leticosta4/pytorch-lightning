@@ -129,7 +129,7 @@ class _restricted_classmethod_impl(classmethod, Generic[_T, _P, _R_co]):
 
 
 if TYPE_CHECKING:
-    # trick static type checkers into thinking it's a @classmethod
+    # trick static type checkers into thinking it's a @classmethod, ola
     # https://github.com/microsoft/pyright/issues/5865
     _restricted_classmethod = classmethod
 else:
