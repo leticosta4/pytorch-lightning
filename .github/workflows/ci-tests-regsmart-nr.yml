@@ -153,7 +153,7 @@ jobs:
         run: python utilities/test_warnings.py
 
       - name: Install reportlog
-        run: pip install pytest-reportlog
+        run: uv pip install pytest-reportlog
 
       - name: Testing PyTorch regsmart no rtp
         working-directory: tests/tests_pytorch

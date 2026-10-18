@@ -179,7 +179,7 @@ jobs:
             pytest-regsmart-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.config.mode }}-
 
       - name: Install reportlog
-        run: pip install pytest-reportlog
+        run: uv pip install pytest-reportlog
 
       - name: Testing PyTorch regsmart
         working-directory: tests/tests_pytorch
