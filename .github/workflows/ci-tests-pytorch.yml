@@ -121,14 +121,26 @@ jobs:
         # needs to run outside `pytest`
         run: python utilities/test_warnings.py
 
+      - name: Install reportlog
+        run: pip install pytest-reportlog
+
       - name: Testing PyTorch
         working-directory: tests/tests_pytorch
         # NOTE: do not include coverage report here, see: https://github.com/nedbat/coveragepy/issues/1003
         run: |
           echo $GITHUB_RUN_ID
           python -m coverage run --source ${{ env.COVERAGE_SCOPE }} \
-            -m pytest . -v -p no:pytest-regsmart -p no:pytest-ranking --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
+            -m pytest . -v --report-log=reportlog.jsonl --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
             --junitxml=junit.xml -o junit_family=legacy  # NOTE: for Codecov's test results
 
       - name: Minimize uv cache
         run: uv cache prune --ci
+
+      - name: Upload report-log
+        if: ${{ !cancelled() }}   # com mutante o step de teste falha; sem isso o arquivo não sobe
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportlog-baseline
+          path: reportlog.jsonl
+          retention-days: 14
+          if-no-files-found: warn

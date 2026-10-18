@@ -171,6 +171,9 @@ jobs:
         working-directory: tests/tests_pytorch
         # needs to run outside `pytest`
         run: python utilities/test_warnings.py
+      
+      - name: Install reportlog
+        run: pip install pytest-reportlog
 
       - name: Restore pytest-ranking cache
         id: restore-pytest-ranking-cache
@@ -179,6 +182,8 @@ jobs:
         with:
           path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
           key: pytest-ranking-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.config.mode }}
+          restore-keys: |
+            pytest-ranking-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.mode }}-${{matrix.python.version}}
 
       - name: Testing PyTorch
         working-directory: tests/tests_pytorch
@@ -186,7 +191,7 @@ jobs:
         run: |
           echo $GITHUB_RUN_ID
           python -m coverage run --source ${{ env.COVERAGE_SCOPE }} \
-            -m pytest . -v --rank --rank-weight=${{ matrix.config.weight }} --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
+            -m pytest . -v --report-log=reportlog.jsonl --rank --rank-weight=${{ matrix.config.weight }} --timeout=90 --durations=50 --random-order-seed=$GITHUB_RUN_ID \
             --junitxml=junit.xml -o junit_family=legacy  # NOTE: for Codecov's test results
       
       - name: Save pytest-ranking cache
@@ -199,3 +204,12 @@ jobs:
 
       - name: Minimize uv cache
         run: uv cache prune --ci
+
+      - name: Upload report-log
+        if: ${{ !cancelled() }}   # com mutante o step de teste falha; sem isso o arquivo não sobe
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportlog-${{ matrix.mode }}
+          path: reportlog.jsonl
+          retention-days: 14
+          if-no-files-found: warn
