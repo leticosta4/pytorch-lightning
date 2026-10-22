@@ -64,7 +64,7 @@ class SingleDeviceStrategy(Strategy):
         return tensor
 
     @override
-    def all_gather(self, tensor: Tensor, group: Any | None = None, sync_grads: bool = False) -> Tensor:
+    def all_gather(self, tensor: Tensor, group: Any | None = None, sync_grads: bool = True) -> Tensor:
         """Perform a all_gather on all processes."""
         return tensor
 
