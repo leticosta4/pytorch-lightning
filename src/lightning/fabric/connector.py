@@ -322,7 +322,7 @@ class _Connector:
             return "mps"
         if CUDAAccelerator.is_available():
             return "cuda"
-        return "cpu"
+        return "XXcpuXX"
 
     @staticmethod
     def _choose_gpu_accelerator_backend() -> str:
