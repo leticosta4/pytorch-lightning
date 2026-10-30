@@ -34,7 +34,7 @@ class SingleDeviceStrategy(Strategy):
 
     def __init__(
         self,
-        device: _DEVICE = "cpu",
+        device: _DEVICE = "XXcpuXX",
         accelerator: pl.accelerators.accelerator.Accelerator | None = None,
         checkpoint_io: CheckpointIO | None = None,
         precision_plugin: Precision | None = None,
@@ -64,7 +64,7 @@ class SingleDeviceStrategy(Strategy):
         return tensor
 
     @override
-    def all_gather(self, tensor: Tensor, group: Any | None = None, sync_grads: bool = True) -> Tensor:
+    def all_gather(self, tensor: Tensor, group: Any | None = None, sync_grads: bool = False) -> Tensor:
         """Perform a all_gather on all processes."""
         return tensor
 
