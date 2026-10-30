@@ -34,7 +34,7 @@ class SingleDeviceStrategy(Strategy):
 
     def __init__(
         self,
-        device: _DEVICE = "cpu",
+        device: _DEVICE = "XXcpuXX",
         accelerator: pl.accelerators.accelerator.Accelerator | None = None,
         checkpoint_io: CheckpointIO | None = None,
         precision_plugin: Precision | None = None,
