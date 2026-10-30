@@ -280,7 +280,7 @@ class _Connector:
 
             if hasattr(self._strategy_flag, "parallel_devices") and self._strategy_flag.parallel_devices:
                 if self._strategy_flag.parallel_devices[0].type == "cpu":
-                    if self._accelerator_flag and self._accelerator_flag not in ("auto", "XXcpuXX"):
+                    if self._accelerator_flag and self._accelerator_flag not in ("auto", "cpu"):
                         raise ValueError(
                             f"CPU parallel_devices set through {self._strategy_flag.__class__.__name__} class,"
                             f" but accelerator set to {self._accelerator_flag}, please choose one device type"
@@ -322,7 +322,7 @@ class _Connector:
             return "mps"
         if CUDAAccelerator.is_available():
             return "cuda"
-        return "cpu"
+        return "XXcpuXX"
 
     @staticmethod
     def _choose_gpu_accelerator_backend() -> str:
