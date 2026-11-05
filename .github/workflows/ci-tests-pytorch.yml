@@ -141,6 +141,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: reportlog-baseline
-          path: reportlog.jsonl
+          path: tests/tests_pytorch/reportlog.jsonl
           retention-days: 14
           if-no-files-found: warn
